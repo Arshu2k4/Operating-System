@@ -1,0 +1,38 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+int findClosest(int head, int requests[], int n, int visited[]) {
+    int min_distance = __INT_MAX__;
+    int closest_index = -1;
+    for (int i = 0; i < n; i++) {
+        if (!visited[i]) {
+            int distance = abs(requests[i] - head);
+            if (distance < min_distance) {
+                min_distance = distance;
+                closest_index = i;
+            }
+        }
+    }
+    return closest_index;
+}
+
+int main() {
+    int requests[] = {82, 170, 140, 24, 16, 190};
+    int n = sizeof(requests) / sizeof(requests[0]);
+    int head = 50;
+    int visited[n], total_movement = 0;
+
+    for (int i = 0; i < n; i++) visited[i] = 0;
+
+    printf("Head Movement Sequence:\n");
+    for (int i = 0; i < n; i++) {
+        int closest_index = findClosest(head, requests, n, visited);
+        visited[closest_index] = 1;
+        total_movement += abs(requests[closest_index] - head);
+        head = requests[closest_index];
+        printf("%d ", head);
+    }
+
+    printf("\nTotal Head Movement: %d\n", total_movement);
+    return 0;
+}

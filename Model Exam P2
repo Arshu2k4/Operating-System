@@ -1,0 +1,123 @@
+#include <stdio.h>
+#include <stdbool.h>
+
+#define PROCESSES 6
+#define RESOURCES 4
+
+void calculateNeed(int need[PROCESSES][RESOURCES], int max[PROCESSES][RESOURCES], int alloc[PROCESSES][RESOURCES]);
+bool isSafeState(int available[RESOURCES], int alloc[PROCESSES][RESOURCES], int need[PROCESSES][RESOURCES]);
+bool canGrantRequest(int process, int request[RESOURCES], int available[RESOURCES], int alloc[PROCESSES][RESOURCES], int need[PROCESSES][RESOURCES]);
+
+int main() {
+    int available[RESOURCES] = {6, 3, 5, 4};
+    int max[PROCESSES][RESOURCES] = {
+        {9, 5, 5, 5},
+        {2, 2, 3, 3},
+        {7, 5, 4, 4},
+        {3, 3, 3, 2},
+        {5, 2, 2, 1},
+        {4, 4, 4, 4}
+    };
+    int alloc[PROCESSES][RESOURCES] = {
+        {2, 0, 2, 1},
+        {0, 1, 1, 1},
+        {4, 1, 0, 2},
+        {1, 0, 0, 1},
+        {1, 1, 0, 0},
+        {1, 0, 1, 1}
+    };
+    int need[PROCESSES][RESOURCES];
+    int request[RESOURCES] = {3, 2, 3, 3};
+
+    calculateNeed(need, max, alloc);
+
+    printf("Need Matrix:\n");
+    for (int i = 0; i < PROCESSES; i++) {
+        for (int j = 0; j < RESOURCES; j++) {
+            printf("%d ", need[i][j]);
+        }
+        printf("\n");
+    }
+
+    if (isSafeState(available, alloc, need)) {
+        printf("The system is in a safe state.\n");
+    } else {
+        printf("The system is not in a safe state.\n");
+    }
+
+    if (canGrantRequest(5, request, available, alloc, need)) {
+        printf("The request can be granted.\n");
+    } else {
+        printf("The request cannot be granted.\n");
+    }
+
+    return 0;
+}
+
+void calculateNeed(int need[PROCESSES][RESOURCES], int max[PROCESSES][RESOURCES], int alloc[PROCESSES][RESOURCES]) {
+    for (int i = 0; i < PROCESSES; i++) {
+        for (int j = 0; j < RESOURCES; j++) {
+            need[i][j] = max[i][j] - alloc[i][j];
+        }
+    }
+}
+
+bool isSafeState(int available[RESOURCES], int alloc[PROCESSES][RESOURCES], int need[PROCESSES][RESOURCES]) {
+    int work[RESOURCES];
+    bool finish[PROCESSES] = {false};
+    for (int i = 0; i < RESOURCES; i++) {
+        work[i] = available[i];
+    }
+
+    while (true) {
+        bool found = false;
+        for (int i = 0; i < PROCESSES; i++) {
+            if (!finish[i]) {
+                bool canAllocate = true;
+                for (int j = 0; j < RESOURCES; j++) {
+                    if (need[i][j] > work[j]) {
+                        canAllocate = false;
+                        break;
+                    }
+                }
+                if (canAllocate) {
+                    for (int j = 0; j < RESOURCES; j++) {
+                        work[j] += alloc[i][j];
+                    }
+                    finish[i] = true;
+                    found = true;
+                }
+            }
+        }
+        if (!found) break;
+    }
+
+    for (int i = 0; i < PROCESSES; i++) {
+        if (!finish[i]) return false;
+    }
+    return true;
+}
+
+bool canGrantRequest(int process, int request[RESOURCES], int available[RESOURCES], int alloc[PROCESSES][RESOURCES], int need[PROCESSES][RESOURCES]) {
+    for (int i = 0; i < RESOURCES; i++) {
+        if (request[i] > need[process][i] || request[i] > available[i]) {
+            return false;
+        }
+    }
+
+    for (int i = 0; i < RESOURCES; i++) {
+        available[i] -= request[i];
+        alloc[process][i] += request[i];
+        need[process][i] -= request[i];
+    }
+
+    bool safe = isSafeState(available, alloc, need);
+
+    for (int i = 0; i < RESOURCES; i++) {
+        available[i] += request[i];
+        alloc[process][i] -= request[i];
+        need[process][i] += request[i];
+    }
+
+    return safe;
+}
